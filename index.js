@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
 // middleware
@@ -26,8 +26,9 @@ const connectDB = async () => {
 }
 connectDB();
 const categoryList = client.db('used_car_zone').collection('categories');
-const brandsList = client.db('used_car_zone').collection('category');
+const productsList = client.db('used_car_zone').collection('category');
 const usersCollection = client.db('used_car_zone').collection('users');
+const ordersCollection = client.db('used_car_zone').collection('orders');
 
 app.get('/categories', async (req, res) => {
     const categories = await categoryList.find({}).toArray();
@@ -36,9 +37,8 @@ app.get('/categories', async (req, res) => {
 // 
 app.get('/category/:id', async (req, res) => {
     const id=parseInt(req.params.id)
-    console.log(typeof id);
     const query={category_id:id}
-    const brandCategory = await brandsList.find(query).toArray();
+    const brandCategory = await productsList.find(query).toArray();
     res.send(brandCategory)
 })
 // post a user
@@ -52,4 +52,18 @@ app.post('/users', async (req, res) => {
     }
     const result = await usersCollection.insertOne(userInfo);
     res.send(result);
+})
+// booking api
+app.post('/orders', async (req, res) => {
+    const orderInfo = req.body;
+    const id = orderInfo.carId;
+    const filter = { _id: ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            isSold:true
+        }
+    }
+    const updateResult = await productsList.updateOne(filter, updateDoc);
+    const result = await ordersCollection.insertOne(orderInfo);
+    res.send({result,updateResult});
 })
