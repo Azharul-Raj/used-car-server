@@ -27,6 +27,7 @@ const connectDB = async () => {
 connectDB();
 const categoryList = client.db('used_car_zone').collection('categories');
 const brandsList = client.db('used_car_zone').collection('category');
+const usersCollection = client.db('used_car_zone').collection('users');
 
 app.get('/categories', async (req, res) => {
     const categories = await categoryList.find({}).toArray();
@@ -39,4 +40,16 @@ app.get('/category/:id', async (req, res) => {
     const query={category_id:id}
     const brandCategory = await brandsList.find(query).toArray();
     res.send(brandCategory)
+})
+// post a user
+app.post('/users', async (req, res) => {
+    const userInfo = req.body;
+    const email = req.query.email;
+    const query={email:email}
+    const isExist = await usersCollection.find(query).toArray();
+    if (isExist.length) {
+        return res.send({isExist:true})
+    }
+    const result = await usersCollection.insertOne(userInfo);
+    res.send(result);
 })
