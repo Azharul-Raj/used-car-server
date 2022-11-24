@@ -3,6 +3,8 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
+var jwt = require('jsonwebtoken');
+
 // middleware
 app.use(cors());
 app.use(express.json());
@@ -69,6 +71,14 @@ app.post('/orders', async (req, res) => {
 })
 // order getting api
 app.get('/orders', async (req, res) => {
-    const orders = await ordersCollection.find({}).toArray();
+    const email = req.query.email;
+    const query={email:email}
+    const orders = await ordersCollection.find(query).toArray();
     res.send(orders);
+})
+// jwt function
+app.get('/jwt', async (req, res) => {
+    const { email } = req.params;
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    res.send({token:token})
 })
