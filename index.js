@@ -4,7 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const app = express();
 require('dotenv').config()
 var jwt = require('jsonwebtoken');
-const stripe = require('stripe')(STRIPE_SECRET);
+const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
 
 // middleware
@@ -76,59 +76,113 @@ app.post('/users', async (req, res) => {
 app.post('/orders', async (req, res) => {
     const orderInfo = req.body;
     const id = orderInfo.carId;
+    console.log(id);
+    const options = { upsert: true };
     const filter = { _id: ObjectId(id) };
     const updateDoc = {
         $set: {
-            isSold:true
+            isSold:false
         }
     }
-    const updateResult = await productsList.updateOne(filter, updateDoc);
+    const updateResult = await productsList.updateOne(filter, updateDoc,options);
     const result = await ordersCollection.insertOne(orderInfo);
-    res.send({result,updateResult});
+    res.send({updateResult});
 })
-// order getting api
+// user order getting api
 app.get('/orders', async (req, res) => {
     const email = req.query.email;
     const query={email:email}
     const orders = await ordersCollection.find(query).toArray();
     res.send(orders);
 })
+// single order getting api
+app.get('/payment/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: ObjectId(id) };
+    const order = await ordersCollection.findOne(query);
+    res.send(order)
+})
 // check user admin or not 
-app.get('/user/admin:email', async (req, res) => {
+app.get('/user/admin/:email', async (req, res) => {
     const { email } = req.params;
     const query={email}
     const user = await usersCollection.find(query);
     if (user) {
-        res.send(us)
+        res.send(user)
     }
 })
 // payment add and update paid status
 app.post('/payments', async (req, res) => {
     const payment = req.body;
-    const id = payment.productID
+    const id = payment.productID;
+    console.log(id);
+    const options = { upsert: true };
     const filter = { _id: ObjectId(id) };
     const updateDoc = {
         $set: {
             isPaid:true
         }
     }
-    const updatePaymentStatus = await productsList.updateOne(filter, updateDoc);
+    const updatePaymentStatus = await ordersCollection.updateOne(filter, updateDoc,options);
     const result = await paymentsCollection.insertOne(payment);
-    res.send(result);
+    res.send({result,updatePaymentStatus});
 })
 // stripe payment intent
 app.post('/create-payment-intent', async (req, res) => {
-    const price= req.body.price;
+    const price = req.body.price;
     const amount=price*100
     const paymentIntent = await stripe.paymentIntents.create({
         amount,
         currency: 'usd',
         payment_method_types: ['card']
     });
+    // console.log(paymentIntent.client_secret);
     res.send({
         clientSecret: paymentIntent.client_secret,
       });
 })
+// check user status api
+app.get('/user/role/:email', async (req, res) => {
+    const { email } = req.params;
+    const query={email}
+    const position = await usersCollection.findOne(query);
+    res.send({position:position.role})
+})
+/**
+ * ADMIN
+ // all buyers getting api
+ */
+app.get('/buyers', async (req, res) => {
+    const query={role:'Buyer'}
+    const buyers = await usersCollection.find(query).toArray();
+    res.send(buyers);
+})
+// sellers getting api
+app.get('/sellers', async (req, res) => {
+    const query={role:'Seller'}
+    const sellers = await usersCollection.find(query).toArray();
+    res.send(sellers);
+})
+// reported item getting api
+app.get('/reported', async (req, res) => {
+    const query = { status: 'reported' };
+    const reported = await productsList.find(query).toArray();
+    res.send(reported);
+})
+/*
+ **ADMIN
+*/
+
+/***SELLER START*/
+app.get('/my_products/:name', async (req, res) => {
+    const { name } = req.params;
+    const query = { sellerName: name }
+    const myproducts = await productsList.find(query).toArray();
+    res.send(myproducts);
+ })
+ /***SELLER END*/
+
+
 
 // jwt function
 app.get('/jwt', async (req, res) => {
