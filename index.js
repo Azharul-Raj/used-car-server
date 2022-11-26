@@ -179,7 +179,25 @@ app.get('/my_products/:name', async (req, res) => {
     const query = { sellerName: name }
     const myproducts = await productsList.find(query).toArray();
     res.send(myproducts);
- })
+})
+//  product adding api
+app.post('/add_product', async (req, res) => {
+    const product = req.body;
+    const result = await productsList.insertOne(product);
+    res.send(result);
+})
+// advertise api here
+app.put('/update/:id', async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            isAdvertise:true
+        }
+    }
+    const result = await productsList.updateOne(filter, updateDoc);
+    res.send(result)
+})
  /***SELLER END*/
 
 
