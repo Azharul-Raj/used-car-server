@@ -198,6 +198,13 @@ app.put('/update/:id', async (req, res) => {
     const result = await productsList.updateOne(filter, updateDoc);
     res.send(result)
 })
+// delete product api 
+app.delete('/product_delete/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: ObjectId(id) };
+    const result = await productsList.deleteOne(query);
+    res.send(result);
+})
  /***SELLER END*/
 
 
