@@ -152,22 +152,32 @@ app.get('/user/role/:email', async (req, res) => {
  * ADMIN
  // all buyers getting api
  */
-app.get('/buyers', async (req, res) => {
-    const query={role:'Buyer'}
+app.get('/identity/:role', async (req, res) => {
+    const { role } = req.params;
+    const query={role:role}
     const buyers = await usersCollection.find(query).toArray();
     res.send(buyers);
 })
-// sellers getting api
-app.get('/sellers', async (req, res) => {
-    const query={role:'Seller'}
-    const sellers = await usersCollection.find(query).toArray();
-    res.send(sellers);
-})
+
 // reported item getting api
 app.get('/reported', async (req, res) => {
     const query = { status: 'reported' };
     const reported = await productsList.find(query).toArray();
     res.send(reported);
+})
+// seller delete api
+app.delete('/seller/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: ObjectId(id) };
+    const result = await usersCollection.deleteOne(query);
+    res.send(result);
+})
+// buyer delete api
+app.delete('/buyer/:id', async (req, res) => {
+    const { id } = req.params;
+    const query = { _id: ObjectId(id) };
+    const result = await usersCollection.deleteOne(query);
+    res.send(result);
 })
 /*
  **ADMIN
@@ -205,8 +215,29 @@ app.delete('/product_delete/:id', async (req, res) => {
     const result = await productsList.deleteOne(query);
     res.send(result);
 })
+// update a seller status
+app.put('/verify/:name', async (req, res) => {
+    const { name } = req.params;
+    console.log(name);
+    const userFilter = { name };
+    const productsFilter = { sellerName: name };
+    const updateDoc = {
+        $set: {
+            isVerified:true
+        }
+    }
+    // products part update
+    const userUpdate = await usersCollection.updateOne(userFilter, updateDoc);
+    const updateSeller = await productsList.updateMany(productsFilter, updateDoc);
+    res.send({userUpdate,updateSeller})
+})
  /***SELLER END*/
-
+// app.get('/name/:name', async (req, res) => {
+//     const { name } = req.params
+//     const query = { name }
+//     const result = await usersCollection.findOne(query)
+//     res.send(result)
+// })
 
 
 // jwt function
