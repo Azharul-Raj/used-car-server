@@ -56,7 +56,7 @@ app.get('/categories', async (req, res) => {
 // 
 app.get('/category/:id', async (req, res) => {
     const id=parseInt(req.params.id)
-    const query={category_id:id}
+    const query={category_id:id,isPaid:false}
     const brandCategory = await productsList.find(query).toArray();
     res.send(brandCategory)
 })
@@ -71,6 +71,14 @@ app.post('/users', async (req, res) => {
     }
     const result = await usersCollection.insertOne(userInfo);
     res.send(result);
+})
+/*
+advertise items getting api
+*/
+app.get('/advertise', async (req, res) => {
+    const query = { isAdvertise: true };
+    const allAdvertise = await productsList.find(query).toArray();
+    res.send(allAdvertise);
 })
 // booking api
 app.post('/orders', async (req, res) => {
@@ -114,17 +122,20 @@ app.get('/user/admin/:email', async (req, res) => {
 // payment add and update paid status
 app.post('/payments', async (req, res) => {
     const payment = req.body;
-    const id = payment.productID;
+    const id = payment.orderID;
+    const productId = payment.productID;
     console.log(id);
     const options = { upsert: true };
     const filter = { _id: ObjectId(id) };
+    const productFilter={_id:ObjectId(productId)}
     const updateDoc = {
         $set: {
             isPaid:true
         }
     }
-    const updatePaymentStatus = await ordersCollection.updateOne(filter, updateDoc,options);
     const result = await paymentsCollection.insertOne(payment);
+    const updatePaymentStatus = await ordersCollection.updateOne(filter, updateDoc, options);
+    const updateProductStatus = await productsList.updateOne(productFilter, updateDoc, options);
     res.send({result,updatePaymentStatus});
 })
 // stripe payment intent
@@ -158,10 +169,23 @@ app.get('/identity/:role', async (req, res) => {
     const buyers = await usersCollection.find(query).toArray();
     res.send(buyers);
 })
-
+/******* 
+ * REPORT POSTING ISSUE
+*/
+app.put('/report/:id', async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            isReported:true
+        }
+    }
+    const result = await productsList.updateOne(filter, updateDoc);
+    res.send(result)
+})
 // reported item getting api
 app.get('/reported', async (req, res) => {
-    const query = { status: 'reported' };
+    const query = { isReported:true };
     const reported = await productsList.find(query).toArray();
     res.send(reported);
 })
@@ -232,12 +256,6 @@ app.put('/verify/:name', async (req, res) => {
     res.send({userUpdate,updateSeller})
 })
  /***SELLER END*/
-// app.get('/name/:name', async (req, res) => {
-//     const { name } = req.params
-//     const query = { name }
-//     const result = await usersCollection.findOne(query)
-//     res.send(result)
-// })
 
 
 // jwt function
