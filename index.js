@@ -75,7 +75,7 @@ app.post('/users', async (req, res) => {
 /*
 advertise items getting api
 */
-app.get('/advertise', async (req, res) => {
+app.get('/advertise',verifyJWT, async (req, res) => {
     const query = { isAdvertise: true };
     const allAdvertise = await productsList.find(query).toArray();
     res.send(allAdvertise);
@@ -84,7 +84,6 @@ app.get('/advertise', async (req, res) => {
 app.post('/orders', async (req, res) => {
     const orderInfo = req.body;
     const id = orderInfo.carId;
-    console.log(id);
     const options = { upsert: true };
     const filter = { _id: ObjectId(id) };
     const updateDoc = {
@@ -97,7 +96,7 @@ app.post('/orders', async (req, res) => {
     res.send({updateResult});
 })
 // user order getting api
-app.get('/orders', async (req, res) => {
+app.get('/orders',verifyJWT, async (req, res) => {
     const email = req.query.email;
     const query={email:email}
     const orders = await ordersCollection.find(query).toArray();
@@ -110,21 +109,12 @@ app.get('/payment/:id', async (req, res) => {
     const order = await ordersCollection.findOne(query);
     res.send(order)
 })
-// check user admin or not 
-app.get('/user/admin/:email', async (req, res) => {
-    const { email } = req.params;
-    const query={email}
-    const user = await usersCollection.find(query);
-    if (user) {
-        res.send(user)
-    }
-})
+
 // payment add and update paid status
 app.post('/payments', async (req, res) => {
     const payment = req.body;
     const id = payment.orderID;
     const productId = payment.productID;
-    console.log(id);
     const options = { upsert: true };
     const filter = { _id: ObjectId(id) };
     const productFilter={_id:ObjectId(productId)}
@@ -163,7 +153,7 @@ app.get('/user/role/:email', async (req, res) => {
  * ADMIN
  // all buyers getting api
  */
-app.get('/identity/:role', async (req, res) => {
+app.get('/identity/:role',verifyJWT, async (req, res) => {
     const { role } = req.params;
     const query={role:role}
     const buyers = await usersCollection.find(query).toArray();
