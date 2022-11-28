@@ -76,7 +76,7 @@ app.post('/users', async (req, res) => {
 advertise items getting api
 */
 app.get('/advertise',verifyJWT, async (req, res) => {
-    const query = { isAdvertise: true };
+    const query = { isAdvertise: true,isPaid:false };
     const allAdvertise = await productsList.find(query).toArray();
     res.send(allAdvertise);
 })
@@ -159,6 +159,13 @@ app.get('/identity/:role',verifyJWT, async (req, res) => {
     const buyers = await usersCollection.find(query).toArray();
     res.send(buyers);
 })
+
+// seller getting api
+app.get('/seller', async (req, res) => {
+    const query = { role: 'Seller' };
+    const sellers = await usersCollection.find(query).toArray();
+    res.send(sellers);
+})
 /******* 
  * REPORT POSTING ISSUE
 */
@@ -182,9 +189,12 @@ app.get('/reported', async (req, res) => {
 // seller delete api
 app.delete('/seller/:id', async (req, res) => {
     const { id } = req.params;
+    const name = req.query.name;
+    const productQuery={sellerName:name}
     const query = { _id: ObjectId(id) };
     const result = await usersCollection.deleteOne(query);
-    res.send(result);
+    const productDelete = await productsList.deleteOne(productQuery);
+    res.send({result,productDelete});
 })
 // buyer delete api
 app.delete('/buyer/:id', async (req, res) => {
