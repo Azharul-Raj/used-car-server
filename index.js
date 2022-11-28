@@ -180,6 +180,18 @@ app.put('/report/:id', async (req, res) => {
     const result = await productsList.updateOne(filter, updateDoc);
     res.send(result)
 })
+// make seller api
+app.put('/make_seller/:id', async (req, res) => {
+    const { id } = req.params;
+    const filter = { _id: ObjectId(id) };
+    const updateDoc = {
+        $set: {
+            role:'Seller'
+        }
+    }
+    const result = await usersCollection.updateOne(filter, updateDoc);
+    res.send(result);
+})
 // reported item getting api
 app.get('/reported', async (req, res) => {
     const query = { isReported:true };
