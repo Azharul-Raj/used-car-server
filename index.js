@@ -6,15 +6,18 @@ require('dotenv').config()
 var jwt = require('jsonwebtoken');
 const stripe = require('stripe')(process.env.STRIPE_SECRET);
 
-
 // middleware
 app.use(cors());
 app.use(express.json());
+app.use((req, res, next) => {
+    res.header({"Access-Control-Allow-Origin": "*"});
+    next();
+  })
 
 const port = process.env.PORT || 3001;
 
 app.get('/', async (req, res) => {
-    res.send('SERVER IS UP AND RUNNING')
+    res.send('SERVER IS UP AND RUNNING');
 })
 app.listen(port, () => {
     console.log(`server is running at ${port}`);
@@ -25,7 +28,7 @@ const verifyJWT = (req, res, next) => {
     if (!authHead) {
         res.status(401).send('UNAUTHORIZED')
     }
-    const token = authHead.split(' ')[1]
+    const token = authHead.split(' ')[1];
     jwt.verify(token, process.env.JWT_SECRET, (err,decoded) => {
         if (err) {
             return res.status(401).send('INVALID TOKEN')
